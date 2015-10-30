@@ -22,7 +22,7 @@ public static RequestQueue newRequestQueue(Context context, HttpStack stack)
 
 第一个方法很简单，直接调用了第二个方法，只不过是第二个参数传递一个默认的 `null`
 
-在第二个方法中，第一个参数不做过多解释，我们来看看第二个参数 [HttpStack](https://github.com/VegeChou/Volley#jump)
+在第二个方法中，第一个参数不做过多解释，我们来看看第二个参数 [HttpStack](HttpStackjava)
 
 下面我们继续分析第二个方法：
 
@@ -75,11 +75,52 @@ public static RequestQueue newRequestQueue(Context context, HttpStack stack)
 
 > 我们已经知道，Volley 对于处理图片缓存，有较高的性能。目前虽然不知道 `DiskBasedCache` 如何使用，但一定与此相关，后面再看。
 
-至此，Volley.java 解析已经结束，下面我们详细看看 `HurlStack` 和 `HttpClientStack` 是如何实现的。
+至此，Volley.java 解析已经结束，下面我们详细看看 [HurlStack](#HurlStackjava) 和 [HttpClientStack](HttpClientStack) 是如何实现的。
 
-### <span id="jump">HttpStack.java</span>
+### HttpStack.java
 
-`HurlStack` 和 `HttpClientStack` 都实现了 HttpStack 的接口
+HTTP 抽象接口类，主要功能是发送 HTTP 请求获得 Response
+
+Volley 默认的请求模块 `HurlStack` 和 `HttpClientStack` 都实现了 HttpStack 的接口，同时我们自己封装 HTTP 模块，实现 HttpStack 接口来处理 Request 请求
+
+```
+public interface HttpStack {
+    /**
+     * Performs an HTTP request with the given parameters.
+     *
+     * <p>A GET request is sent if request.getPostBody() == null. A POST request is sent otherwise,
+     * and the Content-Type header is set to request.getPostBodyContentType().</p>
+     *
+     * @param request the request to perform
+     * @param additionalHeaders additional headers to be sent together with
+     *         {@link Request#getHeaders()}
+     * @return the HTTP response
+     */
+    public HttpResponse performRequest(Request<?> request, Map<String, String> additionalHeaders)
+        throws IOException, AuthFailureError;
+
+}
+```
+接口说明：
+如果 Request 的 postBody 为空，那么将发送一个 GET 请求，否则发送一个 POST 请求，同时 header 里的 Content-Type 被设置到 PostBody 的 ContentType 中。
+
+第一个参数是 Volley 框架的 Request 请求，详细内容稍后再看
+
+第二个参数是给 Request 请求设置额外的 header 信息，传送给服务器
+
+这里又涉及到新的网络请求知识：GET，POST，HEADER，BODY，对于不了解的同学请看[这里](http://www.360doc.com/content/12/0612/14/8093902_217673378.shtml)
+
+> 之前对 Content-Type 了解不够透彻，现总结如下：
+>
+> 1. Content-Type 默认类型 application/x-www-form-urlencoded 
+>
+> 2. GET 请求不需要设置 Content-Type，即使设置了服务器也不一定处理
+>
+> 3. Request 只有在 POST/PUT 中，把  Content-Type 放到 BODY 里
+>
+> 4. Response 的  Content-Type 在 header 里
+
+*Editor in 2015.10.30*
 
 
 
